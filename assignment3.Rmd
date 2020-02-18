@@ -1,7 +1,7 @@
 ---
 title: "Statistical assignment 3"
-author: "[add your name here] [add your candidate number here - mandatory]"
-date: "[add date here]"
+author: "Asli Hasanli - 68003524"
+date: "12/02/2020"
 output: github_document
 ---
 
@@ -33,7 +33,7 @@ library(data.table)
 
 files <- dir(
              # Select the folder where the files are stored.
-             "[add your path here]",
+             "/Users/asli/assignment-3/data",
              # Tell R which pattern you want present in the files it will display.
              pattern = "indresp",
              # We want this process to repeat through the entire folder.
@@ -74,8 +74,11 @@ Now we have got the data from all 7 waves in the same data frame **all7** in the
 
 ```{r}
 Long <- all7 %>%
-  ...
+  pivot_longer(a_memorig:g_vote6, names_to = "variable", values_to = "value") %>%
+  separate(variable, into = c("wave", "variable"), sep = "_", extra = "merge") %>%
+  pivot_wider(names_from = variable, values_from = value)
 Long
+
 ```
 
 ## Filter and recode (20 points)
@@ -84,14 +87,15 @@ Now we want to filter the data keeping only respondents from the original UKHLS 
 
 ```{r}
 Long <- Long %>%
-        filter(...) %>%
-        mutate(sex_dv = ...) %>%
-        mutate(vote6 = ...)
+        filter(memorig == 1) %>%
+        mutate(sex_dv = ifelse(sex_dv == 2, "female",
+                           ifelse(sex_dv == 1, "male", NA)),
+        vote6 = ifelse(vote6 < 0, NA, vote6))
+Long
 
-Long %>%
-        ...
-Long %>%
-        ...
+table(Long$sex_dv)
+
+table(Long$vote6)
 
 ```
 
@@ -101,7 +105,8 @@ Political interest is an ordinal variable, but we will treat it as interval and 
 
 ```{r}
 meanVote6 <- Long %>%
-        ...
+        group_by(sex_dv, wave) %>%
+        summarise(meanVote6 = mean(vote6, na.rm = TRUE))
         
 meanVote6
 ```
@@ -119,9 +124,16 @@ In the cells of this table you should have mean political interest by sex and wa
 
 Write a short interpretation of your findings.
 
+INTERPRETATION : 
+According to this, men are consistenly more interested in politics than women in every wave. On average, men become more interested in politics at each wave. Women are slightly less consistent than men and their interest fluctuates around 2.8-2.9 until their highest interest levels in Wave 7 (g). Overall, women on average are less interested in politics than men in each wave. 
+
 ```{r}
+require(reshape2)
 meanVote6 %>%
-        ...
+  melt(id = c("sex_dv", "wave")) %>%
+  unite("variable", c("wave", "variable"), sep = "_") %>%
+  dcast(sex_dv ~ variable)
+meanVote6
 ```
 
 ## Estimate stability of political interest (30 points)
@@ -147,6 +159,18 @@ Write the R code that does the following.
 5. Write a short interpretation of your findings.
 
 ```{r}
-...
+
+DeltaLong <- Long %>%
+  filter(!is.na(vote6))
+DeltaLong
+
 
 ```
+
+
+
+
+
+
+
+
